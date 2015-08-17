@@ -1,0 +1,32 @@
+.not{
+	width: 400px;
+	padding: 10px;
+    border: 3px solid gray;
+    margin: 25px;
+   	font-family: "Times New Roman", Georgia, Serif;
+}
+
+/*Chapeu*/
+.not h5 {
+	top: 20px;
+	color: black;
+	margin-bottom: 3px;
+}
+/*Subtitulo*/
+.not h4 {
+	margin-top: 5px;
+	color: #808080;
+}
+
+/*Titulo*/
+.not a {
+	margin-top: 1px;
+	font-size: 22px;
+	color: #8B0000;
+}
+
+/*Imagem*/
+.not img {
+	height: 30%;
+	width: 100%;
+}

@@ -6,6 +6,7 @@ import (
   "html/template"
   "net/http"
   "strings"
+  //"log"
 )
 
 type Page struct {
@@ -33,7 +34,7 @@ func split(file []byte) []string {
   } 
   return strSplit
 }
-
+  
 //Unpack the objects
 func unMarshal(file []byte) Page {
 	var data Page
@@ -44,7 +45,8 @@ func unMarshal(file []byte) Page {
 //start server
 func startServer() {
 	http.HandleFunc("/", page)
-  http.ListenAndServe(":3000", nil)
+  http.Handle("/CSS/", http.StripPrefix("/CSS/", http.FileServer(http.Dir("templates/CSS"))))
+  http.ListenAndServe(":8080", nil)
 }
 
 //Template with data 
