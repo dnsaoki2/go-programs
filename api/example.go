@@ -1,13 +1,11 @@
 package main
 
 import (
-	"fmt"
-	"regexp"
+    "fmt"
+    "strings"
 )
 
 func main() {
-	s := "http://c.api.globo.com/news/RJ.json"
-  re := regexp.MustCompile(`http://c.api.globo.com/([A-Za-z/]+).json$`)
-  e := re.FindStringSubmatch(s)
-  fmt.Println(e)
+    fmt.Println(strings.EqualFold("HELLO", "hello"))
+    fmt.Println(strings.EqualFold("ÑOÑO", "ñoño"))
 }

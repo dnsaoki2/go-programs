@@ -7,7 +7,8 @@ import (
   "net/http"
   "strings"
   "fmt"
- )
+)
+
 
 type Page struct {
   Subtitulo   string
@@ -23,7 +24,6 @@ func split(file []byte) []string {
   str := string(file)
   str = strings.Trim(str, "[")
   str = strings.Trim(str,"]")
-  str = strings.TrimSpace(str)
   strSplit := strings.Split(str, "},")
   for i := 0; i < len(strSplit); i++ {
     strAux := make([]byte, len(strSplit[i]))
@@ -52,12 +52,13 @@ func startServer() {
 //Template with data 
 func page(w http.ResponseWriter, r *http.Request) {
   uf := r.URL.Query().Get("uf")
-  if uf == "" {
-    http.Error(w, "UF invalido", http.StatusInternalServerError)
-    return
-  }
   site := fmt.Sprintf("http://c.api.globo.com/news/%s.json", uf)
   file, err := http.Get(site)
+  status := file.StatusCode
+  if status != 200 {
+    http.Error(w, file.Status, http.StatusInternalServerError)
+    return
+  }
   if err != nil {
     panic(err)
   }
