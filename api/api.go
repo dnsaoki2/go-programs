@@ -6,8 +6,8 @@ import (
   "html/template"
   "net/http"
   "strings"
-  //"log"
-)
+  "fmt"
+ )
 
 type Page struct {
   Subtitulo   string
@@ -44,18 +44,28 @@ func unMarshal(file []byte) Page {
 
 //start server
 func startServer() {
-	http.HandleFunc("/", page)
+  http.HandleFunc("/news", page)
   http.Handle("/CSS/", http.StripPrefix("/CSS/", http.FileServer(http.Dir("templates/CSS"))))
   http.ListenAndServe(":8080", nil)
 }
 
 //Template with data 
 func page(w http.ResponseWriter, r *http.Request) {
-  file, err := ioutil.ReadFile("list.json")
+  uf := r.URL.Query().Get("uf")
+  if uf == "" {
+    http.Error(w, "UF invalido", http.StatusInternalServerError)
+    return
+  }
+  site := fmt.Sprintf("http://c.api.globo.com/news/%s.json", uf)
+  file, err := http.Get(site)
   if err != nil {
     panic(err)
   }
-  dataSplit := split(file)
+  dataByte, err := ioutil.ReadAll(file.Body)
+  if err != nil {
+    panic(err)
+  }
+  dataSplit := split(dataByte)
   for i := 0; i < len(dataSplit); i++ { 
     dataPage := unMarshal([]byte(dataSplit[i]))
     tmpl, err := template.ParseFiles("./templates/index.html")
@@ -70,6 +80,6 @@ func page(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-    startServer()
+  startServer()
 }
 

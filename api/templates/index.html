@@ -2,7 +2,7 @@
 <html>
 	<head>
 		<title>Noticias</title>
-		<link rel="stylesheet" type="text/css"  href="CSS/styles.css" />
+		<link rel="stylesheet" type="text/css"  href="/CSS/styles.css" />
     </head>
 	
 	<body>
@@ -10,10 +10,9 @@
 			<h5>{{ .Chapeu}}</h5>
 			<a href={{.Url}}>{{ .Titulo }}</a>
 			<h4>{{.Subtitulo}}</h4>
-			<img src='{{ .Foto}}'>
+			{{ if .Foto }} <img src='{{ .Foto}}'> {{end}} 
 		</div>
 	</body>
-
 </html>
 
 
