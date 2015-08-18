@@ -7,8 +7,13 @@ import (
   "net/http"
   "strings"
   "fmt"
+  "bytes"
+  "time"
 )
 
+//global variables
+var memory map[string]*bytes.Buffer
+var ufs = []string{"AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PR","PB","PA","PE","PI","RJ","RN","RS","RO","RR","SC","SE","SP","TO"}
 
 type Page struct {
   Subtitulo   string
@@ -44,43 +49,87 @@ func unMarshal(file []byte) Page {
 
 //start server
 func startServer() {
-  http.HandleFunc("/news", page)
+  http.HandleFunc("/news", requestPageBuffer)
   http.Handle("/CSS/", http.StripPrefix("/CSS/", http.FileServer(http.Dir("templates/CSS"))))
   http.ListenAndServe(":8080", nil)
 }
 
-//Template with data 
-func page(w http.ResponseWriter, r *http.Request) {
-  uf := r.URL.Query().Get("uf")
-  site := fmt.Sprintf("http://c.api.globo.com/news/%s.json", uf)
-  file, err := http.Get(site)
-  status := file.StatusCode
-  if status != 200 {
-    http.Error(w, file.Status, http.StatusInternalServerError)
+//Request from users
+func requestPageBuffer(w http.ResponseWriter, r *http.Request) {
+  uf := strings.ToUpper(r.URL.Query().Get("uf"))
+  if !contains(uf) {
+    http.Error(w, "Invalid UF", http.StatusInternalServerError)
     return
-  }
-  if err != nil {
-    panic(err)
-  }
-  dataByte, err := ioutil.ReadAll(file.Body)
-  if err != nil {
-    panic(err)
-  }
-  dataSplit := split(dataByte)
-  for i := 0; i < len(dataSplit); i++ { 
-    dataPage := unMarshal([]byte(dataSplit[i]))
-    tmpl, err := template.ParseFiles("./templates/index.html")
+  } 
+  temp := *memory[strings.ToUpper(uf)] 
+  memory[strings.ToUpper(uf)].WriteTo(w)
+  memory[strings.ToUpper(uf)] = &temp
+}
+
+//Save the web page in memory
+func savePageMemory() {
+  fmt.Println("Update memory")
+  memoryTmp := make(map[string]*bytes.Buffer)
+  for index := range ufs {
+    bufferTmp := new(bytes.Buffer)
+    //Get Site for ufs[index]
+    site := fmt.Sprintf("http://c.api.globo.com/news/%s.json", ufs[index])
+    file, err := http.Get(site)
+    //connection error
     if err != nil {
-      http.Error(w, err.Error(), http.StatusInternalServerError)
-      return
+      panic(err)
     }
-    if err := tmpl.Execute(w, dataPage); err != nil {
-      http.Error(w, err.Error(), http.StatusInternalServerError)
+    //status error
+    if file.StatusCode != 200 {
+      bufferTmp = bytes.NewBuffer([]byte(string(file.StatusCode)))
+    } else {
+      //get all data from website
+      dataByte, err := ioutil.ReadAll(file.Body)
+      if err != nil {
+        panic(err)
+      }
+      //split the data
+      dataSplit := split(dataByte)
+      for i := 0; i < len(dataSplit); i++ {
+        //Unpack the objects
+        dataPage := unMarshal([]byte(dataSplit[i]))
+        //make template
+        tmpl, err := template.ParseFiles("./templates/index.html")
+        if err != nil {
+          panic(err)  
+        }
+        //saved in a buffer
+        err = tmpl.Execute(bufferTmp, dataPage)
+        if err != nil {
+          panic(err)
+        }
+      }
+    }
+    memoryTmp[ufs[index]] = bufferTmp
+  }
+  memory = memoryTmp
+}
+
+//Func for verify if ufs contais string s
+func contains(s string) bool {
+  for _, value := range ufs {
+    if strings.EqualFold(s, value) {
+      return true
     }
   }
+  return false
+}
+
+//Func for update the web pages in memory
+func upd() {
+  savePageMemory()
+  time.Sleep(1 * time.Minute)
+  upd()
 }
 
 func main() {
+  go upd()
+  time.Sleep(5 * time.Second)
   startServer()
 }
 
