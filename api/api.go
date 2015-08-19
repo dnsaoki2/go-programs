@@ -9,11 +9,14 @@ import (
   "fmt"
   "bytes"
   "time"
+  "sync"
 )
 
 //global variables
 var memory map[string]*bytes.Buffer
-var ufs = []string{"AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PR","PB","PA","PE","PI","RJ","RN","RS","RO","RR","SC","SE","SP","TO"}
+var ufs = []string{"AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG",
+                    "PR","PB","PA","PE","PI","RJ","RN","RS","RO","RR","SC","SE","SP","TO"}
+var lock sync.Mutex
 
 type Page struct {
   Subtitulo   string
@@ -60,10 +63,19 @@ func requestPageBuffer(w http.ResponseWriter, r *http.Request) {
   if !contains(uf) {
     http.Error(w, "Invalid UF", http.StatusInternalServerError)
     return
-  } 
-  temp := *memory[strings.ToUpper(uf)] 
-  memory[strings.ToUpper(uf)].WriteTo(w)
-  memory[strings.ToUpper(uf)] = &temp
+  }
+  lock.Lock() 
+    temp := *memory[strings.ToUpper(uf)] 
+    memory[strings.ToUpper(uf)].WriteTo(w)
+    memory[strings.ToUpper(uf)] = &temp
+  lock.Unlock()
+}
+
+//Func to update the web pages in memory
+func upd() {
+  savePageMemory()
+  time.Sleep(1 * time.Minute)
+  upd()
 }
 
 //Save the web page in memory
@@ -98,7 +110,7 @@ func savePageMemory() {
         if err != nil {
           panic(err)  
         }
-        //saved in a buffer
+        //save in a buffer
         err = tmpl.Execute(bufferTmp, dataPage)
         if err != nil {
           panic(err)
@@ -107,10 +119,12 @@ func savePageMemory() {
     }
     memoryTmp[ufs[index]] = bufferTmp
   }
-  memory = memoryTmp
+  lock.Lock()
+    memory = memoryTmp
+  lock.Unlock()
 }
 
-//Func for verify if ufs contais string s
+//Func to verify if ufs contais string s
 func contains(s string) bool {
   for _, value := range ufs {
     if strings.EqualFold(s, value) {
@@ -120,16 +134,8 @@ func contains(s string) bool {
   return false
 }
 
-//Func for update the web pages in memory
-func upd() {
-  savePageMemory()
-  time.Sleep(1 * time.Minute)
-  upd()
-}
-
 func main() {
   go upd()
   time.Sleep(5 * time.Second)
   startServer()
 }
-
