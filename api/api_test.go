@@ -1,71 +1,45 @@
-package main 
+package main
 
 import (
+	"gopkg.in/check.v1"
 	"testing"
 )
-func TestUnMarshal(t *testing.T) {
-	input := []byte(`{"subtitulo":"subtitulo","foto":"foto","chapeu":"chapeu","url":"url","estilo":"estilo","titulo":"titulo"}`)
-	result := unMarshal(input)
-	if result.Subtitulo != "subtitulo" {
-		t.Error("Expected subtitulo, got", result.Subtitulo)
-	}
-	if result.Foto != "foto" {
-		t.Error("Expected foto, got", result.Foto)
-	}
-	if result.Chapeu != "chapeu" {
-		t.Error("Expected chapeu, got", result.Chapeu)
-	}
-	if result.Url != "url" {
-		t.Error("Expected url, got", result.Url)
-	}
-	if result.Estilo != "estilo" {
-		t.Error("Expected estilo, got", result.Estilo)
-	}
-	if result.Titulo != "titulo" {
-		t.Error("Expected titulo, got", result.Titulo)
-	}
+
+var unMarshalInput = []byte(`{"subtitulo":"subtitulo","foto":"foto","chapeu":"chapeu","url":"url","estilo":"estilo","titulo":"titulo"}`)
+var splitInput = []byte(`[{"subtitulo":"subtitulo","foto":"foto","chapeu":"chapeu","url":"url","estilo":"estilo","titulo":"titulo"},{"subtitulo":"subtitulo1","foto":"foto1","chapeu":"chapeu1","url":"url1","estilo":"estilo1","titulo":"titulo1"}]`)
+
+func Test(t *testing.T) {
+	check.TestingT(t)
 }
 
+type testingApi struct{}
 
-func TestSplit(t *testing.T) {
-	input := []byte(`[{"subtitulo":"subtitulo","foto":"foto","chapeu":"chapeu","url":"url","estilo":"estilo","titulo":"titulo"},{"subtitulo":"subtitulo1","foto":"foto1","chapeu":"chapeu1","url":"url1","estilo":"estilo1","titulo":"titulo1"}]`)
-	result := split(input)
+var _ = check.Suite(&testingApi{})
+
+func (t *testingApi) TestUnMarshal(c *check.C) {
+	result := unMarshal(unMarshalInput)
+	c.Check(result.Subtitulo, check.Equals, "subtitulo")
+	c.Check(result.Foto, check.Equals, "foto")
+	c.Check(result.Chapeu, check.Equals, "chapeu")
+	c.Check(result.Url, check.Equals, "url")
+	c.Check(result.Estilo, check.Equals, "estilo")
+	c.Check(result.Titulo, check.Equals, "titulo")
+}
+
+func (t *testingApi) TestSplit(c *check.C) {
+	result := split(splitInput)
 	resultMar0 := unMarshal([]byte(result[0]))
 	resultMar1 := unMarshal([]byte(result[1]))
-	if resultMar0.Subtitulo != "subtitulo" {
-		t.Error("Expected subtitulo, got ", resultMar0.Subtitulo)
-	}
-	if resultMar1.Subtitulo != "subtitulo1" {
-		t.Error("Expected subtitulo1, got ", resultMar1.Subtitulo)
-	}
-	if resultMar0.Foto != "foto" {
-		t.Error("Expected foto, got ", resultMar0.Foto)
-	}
-	if resultMar1.Foto != "foto1" {
-		t.Error("Expected foto1, got ", resultMar1.Foto)
-	}
-	if resultMar0.Chapeu != "chapeu" {
-		t.Error("Expected chapeu, got ", resultMar0.Chapeu)
-	}
-	if resultMar1.Chapeu != "chapeu1" {
-		t.Error("Expected chapeu1, got ", resultMar1.Chapeu)
-	}
-	if resultMar0.Url != "url" {
-		t.Error("Expected url, got ", resultMar0.Url)
-	}
-	if resultMar1.Url != "url1" {
-		t.Error("Expected url1, got ", resultMar1.Url)
-	}
-	if resultMar0.Estilo != "estilo" {
-		t.Error("Expected estilo, got ", resultMar0.Estilo)
-	}
-	if resultMar1.Estilo != "estilo1" {
-		t.Error("Expected estilo1, got ", resultMar1.Estilo)
-	}
-	if resultMar0.Titulo != "titulo" {
-		t.Error("Expected titulo, got ", resultMar0.Titulo)
-	}
-	if resultMar1.Titulo != "titulo1" {
-		t.Error("Expected titulo1, got ", resultMar1.Titulo)
-	}
+	c.Check(resultMar0.Subtitulo, check.Equals, "subtitulo")
+	c.Check(resultMar1.Subtitulo, check.Equals, "subtitulo1")
+	c.Check(resultMar0.Foto, check.Equals, "foto")
+	c.Check(resultMar1.Foto, check.Equals, "foto1")
+	c.Check(resultMar0.Chapeu, check.Equals, "chapeu")
+	c.Check(resultMar1.Chapeu, check.Equals, "chapeu1")
+	c.Check(resultMar0.Url, check.Equals, "url")
+	c.Check(resultMar1.Url, check.Equals, "url1")
+	c.Check(resultMar0.Estilo, check.Equals, "estilo")
+	c.Check(resultMar1.Estilo, check.Equals, "estilo1")
+	c.Check(resultMar0.Titulo, check.Equals, "titulo")
+	c.Check(resultMar1.Titulo, check.Equals, "titulo1")
 }
