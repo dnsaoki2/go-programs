@@ -1,7 +1,8 @@
 package main 
 
-import "testing"
-
+import (
+	"testing"
+)
 func TestUnMarshal(t *testing.T) {
 	input := []byte(`{"subtitulo":"subtitulo","foto":"foto","chapeu":"chapeu","url":"url","estilo":"estilo","titulo":"titulo"}`)
 	result := unMarshal(input)

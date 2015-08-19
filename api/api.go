@@ -14,9 +14,9 @@ import (
 
 //global variables
 var memory map[string]*bytes.Buffer
+var lock sync.Mutex
 var ufs = []string{"AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG",
                     "PR","PB","PA","PE","PI","RJ","RN","RS","RO","RR","SC","SE","SP","TO"}
-var lock sync.Mutex
 
 type Page struct {
   Subtitulo   string
@@ -65,24 +65,42 @@ func requestPageBuffer(w http.ResponseWriter, r *http.Request) {
     return
   }
   lock.Lock() 
-    temp := *memory[strings.ToUpper(uf)] 
-    memory[strings.ToUpper(uf)].WriteTo(w)
-    memory[strings.ToUpper(uf)] = &temp
+    temp := *memory[uf] 
+    memory[uf].WriteTo(w)
+    memory[uf] = &temp
   lock.Unlock()
 }
 
 //Func to update the web pages in memory
 func upd() {
   savePageMemory()
-  time.Sleep(1 * time.Minute)
-  upd()
+  for range time.Tick(time.Minute) {
+    savePageMemory()
+  }
 }
 
 //Save the web page in memory
 func savePageMemory() {
   fmt.Println("Update memory")
   memoryTmp := make(map[string]*bytes.Buffer)
+  var wait sync.WaitGroup
   for index := range ufs {
+    wait.Add(1)
+    copy := index
+    go func() { 
+      memoryTmp[ufs[copy]] = savePageMemory_(copy)
+      wait.Done()
+    } ()
+  }
+  wait.Wait()
+  lock.Lock()
+    memory = memoryTmp
+  lock.Unlock()
+}
+
+//goroutine to save page ufs[index]
+func savePageMemory_(index int) *bytes.Buffer {
+    memoryTmp := make(map[string]*bytes.Buffer)
     bufferTmp := new(bytes.Buffer)
     //Get Site for ufs[index]
     site := fmt.Sprintf("http://c.api.globo.com/news/%s.json", ufs[index])
@@ -118,10 +136,7 @@ func savePageMemory() {
       }
     }
     memoryTmp[ufs[index]] = bufferTmp
-  }
-  lock.Lock()
-    memory = memoryTmp
-  lock.Unlock()
+    return memoryTmp[ufs[index]]
 }
 
 //Func to verify if ufs contais string s
@@ -136,6 +151,5 @@ func contains(s string) bool {
 
 func main() {
   go upd()
-  time.Sleep(5 * time.Second)
   startServer()
 }
