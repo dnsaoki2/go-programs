@@ -26,6 +26,11 @@ type Page struct {
 	Titulo    string
 }
 
+type ufPage struct {
+	Uf 		string
+	Pageuf	[]Page
+}
+
 //Split the file into multiple objects
 func split(file []byte) []string {
 	str := string(file)
@@ -56,6 +61,7 @@ func startServer() {
 	http.ListenAndServe(":8080", nil)
 }
 
+//func to connect database
 func connectionDB() *mgo.Session {
 	session, err := mgo.Dial("localhost:27017")
 	if err != nil {
@@ -125,13 +131,17 @@ func savePageMemory_(index int) {
 	}
 	//split the data
 	dataSplit := split(dataByte)
+	session := connectionDB()
+	defer session.Close()
+	c := session.DB("apidb").C(ufs[index])
+	_, err = c.RemoveAll(bson.M{})
+	if err != nil {
+		panic(err)
+	}
 	for i := 0; i < len(dataSplit); i++ {
 		//Unpack the objects
 		dataPage := unMarshal([]byte(dataSplit[i]))
 		//Connection to database and save the data struct in db
-		session := connectionDB()
-		defer session.Close()
-		c := session.DB("apidb").C(ufs[index])
 		err = c.Insert(&dataPage)
 		if err != nil {
 			log.Fatal(err)
