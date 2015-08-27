@@ -1,0 +1,3 @@
+FROM golang:onbuild
+
+ENV LOCALBD='192.168.99.100:27017'

@@ -11,6 +11,9 @@ import (
 	"net/http"
 	"strings"
 	"time"
+	"github.com/gorilla/pat"
+	"os"
+	"sync"
 )
 
 //global variables
@@ -26,7 +29,7 @@ type Page struct {
 	Titulo    string
 }
 
-type ufPage struct {
+type UfPage struct {
 	Uf 		string
 	Pageuf	[]Page
 }
@@ -56,14 +59,18 @@ func unMarshal(file []byte) Page {
 
 //start server
 func startServer() {
-	http.HandleFunc("/news", requestPageDB)
+	r := pat.New()
+    r.Get("/news/{uf:[A-Za-z]+}", requestPageDB)
+	http.Handle("/",r)
 	http.Handle("/CSS/", http.StripPrefix("/CSS/", http.FileServer(http.Dir("templates/CSS"))))
 	http.ListenAndServe(":8080", nil)
 }
 
 //func to connect database
 func connectionDB() *mgo.Session {
-	session, err := mgo.Dial("localhost:27017")
+	//session, err := mgo.Dial(os.Getenv("DB_PORT_27017_TCP_ADDR")+":"+os.Getenv("DB_PORT_27017_TCP_PORT"))
+	fmt.Println("AQUIIII" + os.Getenv("TSURU_HOST"))
+	session, err := mgo.Dial(os.Getenv("MONGODB_HOSTS"))
 	if err != nil {
 		panic(err)
 	}
@@ -72,24 +79,24 @@ func connectionDB() *mgo.Session {
 
 //Request from users
 func requestPageDB(w http.ResponseWriter, r *http.Request) {
-	uf := strings.ToUpper(r.URL.Query().Get("uf"))
+	uf := strings.ToUpper(r.URL.Query().Get(":uf"))
 	if !contains(uf) {
 		http.Error(w, "Invalid UF", http.StatusInternalServerError)
 		return
 	}
 	session := connectionDB()
 	defer session.Close()
-	var result []Page
-	err := session.DB("apidb").C(uf).Find(bson.M{}).All(&result)
+	var result []UfPage
+	err := session.DB("apidb").C("news").Find(bson.M{"uf":uf}).All(&result)
 	if err != nil {
 		log.Fatal(err)
 	}
-	for index := range result {
+	for index := range result[0].Pageuf {
 		tmpl, err := template.ParseFiles("./templates/index.html")
 		if err != nil {
 			panic(err)
 		}
-		err = tmpl.Execute(w, result[index])
+		err = tmpl.Execute(w, result[0].Pageuf[index])
 		if err != nil {
 			panic(err)
 		}
@@ -106,18 +113,22 @@ func upd() {
 
 //Save the web page in memory
 func savePageMemory() {
-	fmt.Println("Update memory")
+	var wait sync.WaitGroup
+	fmt.Println("Update start ...")
 	for index := range ufs {
+		wait.Add(1)
 		copy := index
 		go func() {
 			savePageMemory_(copy)
+			wait.Done()
 		}()
 	}
+	wait.Wait()
+	fmt.Println(" ...Update done")
 }
 
 //goroutine to save page ufs[index]
 func savePageMemory_(index int) {
-	//Get Site for ufs[index]
 	site := fmt.Sprintf("http://c.api.globo.com/news/%s.json", ufs[index])
 	file, err := http.Get(site)
 	//connection error
@@ -133,19 +144,16 @@ func savePageMemory_(index int) {
 	dataSplit := split(dataByte)
 	session := connectionDB()
 	defer session.Close()
-	c := session.DB("apidb").C(ufs[index])
-	_, err = c.RemoveAll(bson.M{})
-	if err != nil {
-		panic(err)
-	}
+	c := session.DB("apidb").C("news")
+	var ufPage UfPage
+	ufPage.Uf = ufs[index]
+	ufPage.Pageuf = make([]Page, len(dataSplit))
 	for i := 0; i < len(dataSplit); i++ {
-		//Unpack the objects
-		dataPage := unMarshal([]byte(dataSplit[i]))
-		//Connection to database and save the data struct in db
-		err = c.Insert(&dataPage)
-		if err != nil {
-			log.Fatal(err)
-		}
+		ufPage.Pageuf[i] = unMarshal([]byte(dataSplit[i]))
+	}
+	_, err = c.Upsert(bson.M{"uf":ufs[index]}, &ufPage)
+	if err != nil {
+		log.Fatal(err)
 	}
 }
 
@@ -161,7 +169,7 @@ func contains(s string) bool {
 
 func main() {
 	go upd()
-	time.Sleep(2 * time.Second)
+	time.Sleep(10 * time.Second)
 	startServer()
 
 }
