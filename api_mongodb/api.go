@@ -63,13 +63,12 @@ func startServer() {
     r.Get("/news/{uf:[A-Za-z]+}", requestPageDB)
 	http.Handle("/",r)
 	http.Handle("/CSS/", http.StripPrefix("/CSS/", http.FileServer(http.Dir("templates/CSS"))))
-	http.ListenAndServe(":8080", nil)
+	http.ListenAndServe(":"+os.Getenv("PORT"), nil)
 }
 
 //func to connect database
 func connectionDB() *mgo.Session {
 	//session, err := mgo.Dial(os.Getenv("DB_PORT_27017_TCP_ADDR")+":"+os.Getenv("DB_PORT_27017_TCP_PORT"))
-	fmt.Println("AQUIIII" + os.Getenv("TSURU_HOST"))
 	session, err := mgo.Dial(os.Getenv("MONGODB_HOSTS"))
 	if err != nil {
 		panic(err)
@@ -171,5 +170,4 @@ func main() {
 	go upd()
 	time.Sleep(10 * time.Second)
 	startServer()
-
 }
