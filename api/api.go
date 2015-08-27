@@ -8,7 +8,7 @@ import (
 	"html/template"
 	"io/ioutil"
 	"net/http"
-	"os"
+	//"os"
 	"strings"
 	"sync"
 	"time"
@@ -56,7 +56,7 @@ func unMarshal(file []byte) Page {
 func startServer() {
 	http.HandleFunc("/news", requestPageBuffer)
 	http.Handle("/CSS/", http.StripPrefix("/CSS/", http.FileServer(http.Dir("templates/CSS"))))
-	http.ListenAndServe(":"+os.Getenv("PORT"), nil)
+	http.ListenAndServe(":8080", nil)
 }
 
 //Request from users
