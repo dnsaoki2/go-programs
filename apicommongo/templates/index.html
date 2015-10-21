@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>News</title>
+		<link rel="stylesheet" type="text/css"  href="/CSS/styles.css" />
+    </head>
+	
+	<body>
+		<div class="not">
+			<h5>{{ .Chapeu}}</h5>
+			<a href={{.Url}}>{{ .Titulo }}</a>
+			<h4>{{.Subtitulo}}</h4>
+			{{ if .Foto }} <img src='{{ .Foto}}'> {{end}} 
+		</div>
+	</body>
+</html>
+
+
