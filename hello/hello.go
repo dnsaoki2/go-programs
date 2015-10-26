@@ -1,12 +1,7 @@
 package main
 
-import (
-	"fmt"
-	"github.com/dnsaoki2/stringutil"
-)
+import "fmt"
 
 func main() {
-	fmt.Println(stringutil.Reverse("!oG ,olleH"))
+    fmt.Printf("hello, world\n")
 }
-
-
