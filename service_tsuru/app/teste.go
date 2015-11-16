@@ -45,5 +45,5 @@ func main() {
 	// 	log.Fatal(err)
 	// }
 	fmt.Println("teste2")
-	//fmt.Println("teste1")
+	fmt.Println("teste1")
 }
