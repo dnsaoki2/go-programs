@@ -8,19 +8,19 @@ import (
 	//"os"
 )
 
-type Page struct {
-	Subtitulo string
-	Foto      string
-	Chapeu    string
-	Url       string
-	Estilo    string
-	Titulo    string
-}
+// type Page struct {
+// 	Subtitulo string
+// 	Foto      string
+// 	Chapeu    string
+// 	Url       string
+// 	Estilo    string
+// 	Titulo    string
+// }
 
-type UfPage struct {
-	Uf     string
-	Pageuf Page
-}
+// type UfPage struct {
+// 	Uf     string
+// 	Pageuf Page
+//}
 
 func main() {
 	//host := os.Getenv("MONGODB_URI")
@@ -45,5 +45,5 @@ func main() {
 	// 	log.Fatal(err)
 	// }
 	fmt.Println("teste2")
-	fmt.Println("teste1")
+	//fmt.Println("teste1")
 }
